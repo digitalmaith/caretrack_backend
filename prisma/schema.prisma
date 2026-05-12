@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+// ─── Enums ────────────────────────────────────────────
+enum Role     { 
+  ADMIN 
+  DOCTOR 
+  }
+enum Gender   { 
+  MALE 
+  FEMALE 
+  OTHER 
+  }
+enum AlertType { 
+  HIGH_HEART_RATE 
+  LOW_HEART_RATE 
+  HIGH_TEMPERATURE 
+  HIGH_BLOOD_PRESSURE 
+  CRITICAL_VALUES 
+  }
+enum Severity  { 
+  LOW 
+  MEDIUM 
+  HIGH 
+  CRITICAL 
+  }
+
+// ─── User (médecin / admin) ────────────────────────────
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String
+  password      String
+  role          Role           @default(DOCTOR)
+  avatarUrl     String?        // URL Cloudinary
+  avatarPublicId String?       // ID pour supprimer sur Cloudinary
+  consultations Consultation[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+// ─── Patient ──────────────────────────────────────────
+model Patient {
+  id              String         @id @default(cuid())
+  firstName       String
+  lastName        String
+  dateOfBirth     DateTime
+  gender          Gender
+  phone           String?
+  email           String?        @unique
+  photoUrl        String?        // URL Cloudinary
+  photoPublicId   String?        // ID pour supprimer sur Cloudinary
+  consultations   Consultation[]
+  alerts          Alert[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+// ─── Consultation ─────────────────────────────────────
+model Consultation {
+  id              String    @id @default(cuid())
+  date            DateTime  @default(now())
+  notes           String?
+  diagnosis       String
+  heartRate       Int?
+  bloodPressure   String?
+  temperature     Float?
+  attachments     Attachment[]  // documents médicaux sur Cloudinary
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  doctorId        String
+  doctor          User      @relation(fields: [doctorId], references: [id])
+  alerts          Alert[]
+  createdAt       DateTime  @default(now())
+}
+
+// ─── Pièce jointe (radio, ordonnance...) ──────────────
+model Attachment {
+  id               String       @id @default(cuid())
+  label            String       // ex: "Radio thorax"
+  url              String       // URL Cloudinary
+  publicId         String       // pour suppression Cloudinary
+  resourceType     String       @default("image") // image | raw (pdf)
+  consultationId   String
+  consultation     Consultation @relation(fields: [consultationId], references: [id])
+  createdAt        DateTime     @default(now())
+}
+
+// ─── Alerte médicale ──────────────────────────────────
+model Alert {
+  id             String        @id @default(cuid())
+  type           AlertType
+  message        String
+  severity       Severity
+  resolved       Boolean       @default(false)
+  patientId      String
+  patient        Patient       @relation(fields: [patientId], references: [id])
+  consultationId String?
+  consultation   Consultation? @relation(fields: [consultationId], references: [id])
+  createdAt      DateTime      @default(now())
+}
