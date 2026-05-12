@@ -5,6 +5,7 @@ import { consultationSchemas } from "./schemas/consultation.schema"
 import { patientDocs }        from "./docs/patient.docs"
 import { consultationDocs }   from "./docs/consultation.docs"
 import { uploadDocs }      from "./docs/upload.docs"
+import { authDocs } from "./docs/auth.docs"
 
 const spec = {
   openapi: "3.0.0",
@@ -26,8 +27,18 @@ const spec = {
       ...consultationSchemas,
       ...uploadDocs,
     },
+    securitySchemes: {
+    BearerAuth: {
+      type: "http",
+      scheme: "bearer",
+      bearerFormat: "JWT",
+    },
   },
+  },
+  // Ajouter security globale (protège toutes les routes par défaut) :
+  security: [{ BearerAuth: [] }],
   paths: {
+    ...authDocs,
     ...patientDocs,
     ...consultationDocs,
     ...uploadDocs,
