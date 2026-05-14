@@ -1,0 +1,27 @@
+services:
+  #  Service de la base de données
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: caretrack_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    # Service de l'application Next.js
+  app:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://postgres:1234@db:5432/caretrack_db
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
